@@ -62,6 +62,7 @@ class SkillInfo:
     class_name: str
     func_name: str
     args_schema: str
+    return_direct: bool = False
 
 
 def get_loop() -> tuple[asyncio.AbstractEventLoop, threading.Thread | None]:
@@ -395,7 +396,10 @@ class ModuleBase(Configurable[ModuleConfigT], Resource):
                 schema = json.dumps(tool(attr).args_schema.model_json_schema())
                 skills.append(
                     SkillInfo(
-                        class_name=self.__class__.__name__, func_name=name, args_schema=schema
+                        class_name=self.__class__.__name__,
+                        func_name=name,
+                        args_schema=schema,
+                        return_direct=getattr(attr, "__return_direct__", False),
                     )
                 )
         self._cached_skills = skills

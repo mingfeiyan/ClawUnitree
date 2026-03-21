@@ -82,7 +82,7 @@ class NavigationSkillContainer(Module):
     def _on_odom(self, odom: PoseStamped) -> None:
         self._latest_odom = odom
 
-    @skill
+    @skill(return_direct=True)
     def tag_location(self, location_name: str) -> str:
         """Tag this location in the spatial memory with a name.
 
@@ -117,7 +117,7 @@ class NavigationSkillContainer(Module):
         logger.info(f"Tagged {location}")
         return f"Tagged '{location_name}': ({position.x},{position.y})."
 
-    @skill
+    @skill(return_direct=True)
     def navigate_with_text(self, query: str) -> str:
         """Navigate to a location by querying the existing semantic map using natural language.
 
@@ -280,7 +280,46 @@ class NavigationSkillContainer(Module):
         message = f"Found a location in the semantic map matching '{query}'."
         return self._navigate_to(goal_pose, message)
 
-    @skill
+    @skill()
+    def recall_memory(self, query: str) -> str:
+        """Search the robot's visual memory for places or objects it has seen before.
+
+        Use this skill when asked about what the robot has seen, whether it remembers
+        seeing something, or to recall past observations.
+
+        Args:
+            query: Text description of what to search for (e.g., "rabbit", "kitchen", "red chair")
+
+        Returns:
+            str: Description of matching memories, or a message if nothing was found.
+        """
+        if not self._skill_started:
+            raise ValueError(f"{self} has not been started.")
+
+        try:
+            query_by_text_rpc = self.get_rpc_calls("SpatialMemory.query_by_text")
+        except Exception:
+            return "Error: SpatialMemory module is not connected."
+
+        results = query_by_text_rpc(query)
+
+        if not results:
+            return f"I have no memory of seeing '{query}' during this session."
+
+        descriptions = []
+        for i, result in enumerate(results[:3], 1):
+            metadata = result.get("metadata", {})
+            distance = result.get("distance", None)
+            pos_x = metadata.get("pos_x", 0)
+            pos_y = metadata.get("pos_y", 0)
+            similarity = f" (similarity: {1 - distance:.2f})" if distance is not None else ""
+            descriptions.append(
+                f"{i}. Seen at position ({pos_x:.1f}, {pos_y:.1f}){similarity}"
+            )
+
+        return f"Found {len(results)} memory matches for '{query}':\n" + "\n".join(descriptions)
+
+    @skill(return_direct=True)
     def stop_navigation(self) -> str:
         """Immediatly stop moving."""
 

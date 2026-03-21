@@ -210,7 +210,7 @@ class UnitreeSkillContainer(Module):
     def stop(self) -> None:
         super().stop()
 
-    @skill
+    @skill(return_direct=True)
     def relative_move(self, forward: float = 0.0, left: float = 0.0, degrees: float = 0.0) -> str:
         """Move the robot relative to its current position.
 
@@ -281,7 +281,7 @@ class UnitreeSkillContainer(Module):
 
         return PoseStamped(position=goal_position, orientation=goal_orientation)
 
-    @skill
+    @skill(return_direct=True)
     def wait(self, seconds: float) -> str:
         """Wait for a specified amount of time.
 
@@ -296,7 +296,7 @@ class UnitreeSkillContainer(Module):
         """Provides current time."""
         return str(datetime.datetime.now())
 
-    @skill
+    @skill(return_direct=True)
     def execute_sport_command(self, command_name: str) -> str:
         try:
             publish_request = self.get_rpc_calls("GO2Connection.publish_request")

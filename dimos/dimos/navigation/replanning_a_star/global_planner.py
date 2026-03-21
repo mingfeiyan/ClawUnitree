@@ -350,6 +350,17 @@ class GlobalPlanner(Resource):
             if path and path.poses:
                 logger.info(f"Found path {size}x robot width.")
                 return path
+            else:
+                start_grid = costmap.world_to_grid(robot_pos)
+                goal_grid = costmap.world_to_grid(goal)
+                logger.warning(
+                    "A* failed.",
+                    robot_world=(round(robot_pos.x, 2), round(robot_pos.y, 2)),
+                    robot_grid=(round(start_grid.x, 1), round(start_grid.y, 1)),
+                    goal_world=(round(goal.x, 2), round(goal.y, 2)),
+                    goal_grid=(round(goal_grid.x, 1), round(goal_grid.y, 1)),
+                    map_size=(costmap.width, costmap.height),
+                )
 
         return None
 

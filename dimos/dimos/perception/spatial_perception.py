@@ -63,7 +63,7 @@ class SpatialConfig(ModuleConfig):
     visual_memory_path: str | None = str(
         _VISUAL_MEMORY_PATH
     )  # Path for saving/loading visual memory
-    new_memory: bool = True  # Whether to create a new memory from scratch
+    new_memory: bool = False  # Whether to create a new memory from scratch
     output_dir: str | None = str(_SPATIAL_MEMORY_DIR)  # Directory for storing visual memory data
     chroma_client: Any = None  # Optional ChromaDB client for persistence
     visual_memory: VisualMemory | None = None  # Optional VisualMemory instance for storing images

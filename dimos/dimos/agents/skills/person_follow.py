@@ -109,7 +109,7 @@ class PersonFollowSkillContainer(Module[Config]):
         self._vl_model.stop()
         super().stop()
 
-    @skill
+    @skill(return_direct=True)
     def follow_person(
         self,
         query: str,
@@ -170,7 +170,7 @@ class PersonFollowSkillContainer(Module[Config]):
 
         return self._follow_person(query, bbox, detection_image)
 
-    @skill
+    @skill(return_direct=True)
     def stop_following(self) -> str:
         """Stop following the current person.
 

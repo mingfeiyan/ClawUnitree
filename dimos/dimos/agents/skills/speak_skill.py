@@ -36,8 +36,12 @@ class SpeakSkill(Module):
     def start(self) -> None:
         super().start()
         self._tts_node = OpenAITTSNode(speed=1.2, voice=Voice.ONYX)
-        self._audio_output = SounddeviceAudioOutput(sample_rate=24000)
-        self._audio_output.consume_audio(self._tts_node.emit_audio())
+        try:
+            self._audio_output = SounddeviceAudioOutput(sample_rate=24000)
+            self._audio_output.consume_audio(self._tts_node.emit_audio())
+        except Exception as e:
+            logger.warning(f"No local audio output device available ({e}), speak skill will use TTS without local playback")
+            self._audio_output = None
 
     @rpc
     def stop(self) -> None:
@@ -49,7 +53,7 @@ class SpeakSkill(Module):
             self._audio_output = None
         super().stop()
 
-    @skill
+    @skill(return_direct=True)
     def speak(self, text: str) -> str:
         """Speak text out loud through the robot's speakers.
 

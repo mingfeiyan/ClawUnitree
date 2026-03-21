@@ -774,6 +774,25 @@ class WavefrontFrontierExplorer(Module[WavefrontConfig]):
             goal = self.get_exploration_goal(robot_pose, costmap)
 
             if goal:
+                # Skip goals outside the costmap bounds
+                goal_grid = costmap.world_to_grid(goal)
+                robot_grid = costmap.world_to_grid(robot_pose)
+                if not (
+                    0 <= int(goal_grid.x) < costmap.width
+                    and 0 <= int(goal_grid.y) < costmap.height
+                    and 0 <= int(robot_grid.x) < costmap.width
+                    and 0 <= int(robot_grid.y) < costmap.height
+                ):
+                    logger.warning(
+                        f"Skipping out-of-bounds frontier goal: ({goal.x:.2f}, {goal.y:.2f}), "
+                        f"goal_grid=({goal_grid.x:.0f}, {goal_grid.y:.0f}), "
+                        f"robot_grid=({robot_grid.x:.0f}, {robot_grid.y:.0f}), "
+                        f"map_size=({costmap.width}, {costmap.height})"
+                    )
+                    consecutive_failures += 1
+                    threading.Event().wait(1.0)
+                    continue
+
                 # Publish goal to navigator
                 goal_msg = PoseStamped()
                 goal_msg.position.x = goal.x
@@ -811,8 +830,16 @@ class WavefrontFrontierExplorer(Module[WavefrontConfig]):
                     self.exploration_active = False
                     break
                 elif goals_published < 2:
+                    if consecutive_failures >= max_consecutive_failures:
+                        logger.info(
+                            f"No frontiers found after {consecutive_failures} attempts. "
+                            "Area may already be fully explored."
+                        )
+                        self.exploration_active = False
+                        break
                     logger.info(
-                        f"No frontier found, but only {goals_published} goals published so far. Retrying in 2 seconds..."
+                        f"No frontier found, but only {goals_published} goals published so far. "
+                        f"Retrying in 2 seconds... (attempt {consecutive_failures}/{max_consecutive_failures})"
                     )
                     threading.Event().wait(2.0)
                 else:
@@ -821,9 +848,19 @@ class WavefrontFrontierExplorer(Module[WavefrontConfig]):
                     )
                     threading.Event().wait(2.0)
 
-    @skill
+    @skill(return_direct=True)
     def begin_exploration(self) -> str:
         """Command the robot to move around and explore the area. Cancelled with end_exploration."""
+        # Ensure the robot is standing before exploring.
+        try:
+            from unitree_webrtc_connect.constants import RTC_TOPIC
+
+            publish_request = self.get_rpc_calls("GO2Connection.publish_request")
+            publish_request(RTC_TOPIC["SPORT_MOD"], {"api_id": 1004})  # StandUp
+            threading.Event().wait(1.0)  # Give the robot time to stand
+        except Exception as e:
+            logger.warning(f"Could not issue StandUp before exploration: {e}")
+
         started = self.explore()
         if not started:
             return "Exploration skill is already active. Use end_exploration to stop before starting again."
@@ -832,7 +869,7 @@ class WavefrontFrontierExplorer(Module[WavefrontConfig]):
             "to stop. You also need to cancel before starting a new movement tool."
         )
 
-    @skill
+    @skill(return_direct=True)
     def end_exploration(self) -> str:
         """Cancel the exploration. The robot will stop moving and remain where it is."""
         stopped = self.stop_exploration()

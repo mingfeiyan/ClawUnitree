@@ -18,7 +18,15 @@ from typing import Any, TypeVar
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-def skill(func: F) -> F:
-    func.__rpc__ = True  # type: ignore[attr-defined]
-    func.__skill__ = True  # type: ignore[attr-defined]
-    return func
+def skill(func: F | None = None, *, return_direct: bool = False) -> F | Callable[[F], F]:
+    def decorator(fn: F) -> F:
+        fn.__rpc__ = True  # type: ignore[attr-defined]
+        fn.__skill__ = True  # type: ignore[attr-defined]
+        fn.__return_direct__ = return_direct  # type: ignore[attr-defined]
+        return fn
+
+    if func is not None:
+        # Called as @skill (no arguments)
+        return decorator(func)
+    # Called as @skill(return_direct=True)
+    return decorator  # type: ignore[return-value]

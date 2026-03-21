@@ -67,7 +67,7 @@ class PerceiveLoopSkill(Module):
         self._stop_lookout()
         super().stop()
 
-    @skill
+    @skill(return_direct=True)
     def look_out_for(
         self, description_of_things: list[str], then: dict[str, Any] | None = None
     ) -> str:
@@ -130,7 +130,7 @@ class PerceiveLoopSkill(Module):
             "need to use it in order to save resources."
         )
 
-    @skill
+    @skill(return_direct=True)
     def stop_looking_out(self) -> str:
         """Stop looking out. Use this to end `look_out_for` tool calls."""
         with self._lock:

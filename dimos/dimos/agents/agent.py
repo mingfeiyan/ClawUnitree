@@ -16,7 +16,6 @@ import json
 from queue import Empty, Queue
 from threading import Event, RLock, Thread
 from typing import TYPE_CHECKING, Any, Protocol
-import uuid
 
 from langchain_core.messages import HumanMessage
 from langchain_core.messages.base import BaseMessage
@@ -42,7 +41,7 @@ if TYPE_CHECKING:
 
 class AgentConfig(ModuleConfig):
     system_prompt: str | None = SYSTEM_PROMPT
-    model: str = "anthropic:claude-opus-4-6"
+    model: str = "anthropic:claude-sonnet-4-6"
     model_fixture: str | None = None
 
 
@@ -282,9 +281,10 @@ def _skill_to_tool(agent: Agent, skill: SkillInfo, rpc: RPCSpec) -> StructuredTo
             return "It has started. You will be updated later."
 
         if hasattr(result, "agent_encode"):
-            uuid_ = str(uuid.uuid4())
-            _append_image_to_history(agent, skill, uuid_, result)
-            return f"Tool call started with UUID: {uuid_}"
+            return [
+                {"type": "text", "text": f"Here is the result of '{skill.func_name}':"},
+                *result.agent_encode(),
+            ]
 
         return str(result)
 
@@ -292,6 +292,7 @@ def _skill_to_tool(agent: Agent, skill: SkillInfo, rpc: RPCSpec) -> StructuredTo
         name=skill.func_name,
         func=wrapped_func,
         args_schema=json.loads(skill.args_schema),
+        return_direct=skill.return_direct,
     )
 
 

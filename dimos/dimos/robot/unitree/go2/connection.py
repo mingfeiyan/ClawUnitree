@@ -332,7 +332,7 @@ class GO2Connection(Module[_Config], Camera, Pointcloud):
         """
         return self.connection.publish_request(topic, data)
 
-    @skill
+    @skill()
     def observe(self) -> Image | None:
         """Returns the latest video frame from the robot camera. Use this skill for any visual world queries.
 

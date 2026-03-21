@@ -136,7 +136,20 @@ def min_cost_astar(
     start_tuple = (int(start_vector.x), int(start_vector.y))
     goal_tuple = (int(goal_vector.x), int(goal_vector.y))
 
+    if not (0 <= start_tuple[0] < costmap.width and 0 <= start_tuple[1] < costmap.height):
+        logger.warning(
+            "Start position out of costmap bounds.",
+            start=start_tuple,
+            map_size=(costmap.width, costmap.height),
+        )
+        return None
+
     if not (0 <= goal_tuple[0] < costmap.width and 0 <= goal_tuple[1] < costmap.height):
+        logger.warning(
+            "Goal position out of costmap bounds.",
+            goal=goal_tuple,
+            map_size=(costmap.width, costmap.height),
+        )
         return None
 
     if use_cpp:
