@@ -309,6 +309,9 @@ class NavigationSkillContainer(Module):
         descriptions = []
         for i, result in enumerate(results[:3], 1):
             metadata = result.get("metadata", {})
+            # ChromaDB returns metadata as a list of dicts; unwrap if needed
+            if isinstance(metadata, list):
+                metadata = metadata[0] if metadata else {}
             distance = result.get("distance", None)
             pos_x = metadata.get("pos_x", 0)
             pos_y = metadata.get("pos_y", 0)

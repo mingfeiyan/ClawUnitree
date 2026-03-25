@@ -16,12 +16,12 @@
 from dimos.core.blueprints import autoconnect
 from dimos.core.global_config import global_config
 from dimos.perception.perceive_loop_skill import PerceiveLoopSkill
-from dimos.perception.spatial_perception import SpatialConfig, spatial_memory
+from dimos.perception.spatial_perception import spatial_memory
 from dimos.robot.unitree.go2.blueprints.smart.unitree_go2 import unitree_go2
 
 unitree_go2_spatial = autoconnect(
     unitree_go2,
-    spatial_memory(config=SpatialConfig(new_memory=global_config.new_memory)),
+    spatial_memory(new_memory=global_config.new_memory),
     PerceiveLoopSkill.blueprint(),
 ).global_config(n_workers=8)
 

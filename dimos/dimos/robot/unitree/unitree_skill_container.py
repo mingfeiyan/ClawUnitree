@@ -296,6 +296,17 @@ class UnitreeSkillContainer(Module):
         """Provides current time."""
         return str(datetime.datetime.now())
 
+    # Commands that change posture and conflict with active navigation
+    _POSTURE_COMMANDS: set[str] = {"StandDown", "Sit", "StandUp", "RecoveryStand", "RiseSit"}
+
+    def _cancel_navigation(self) -> None:
+        """Cancel any active navigation goal to prevent cmd_vel conflicts."""
+        try:
+            cancel_goal_rpc = self.get_rpc_calls("NavigationInterface.cancel_goal")
+            cancel_goal_rpc()
+        except Exception:
+            pass  # Navigation module may not be connected
+
     @skill(return_direct=True)
     def execute_sport_command(self, command_name: str) -> str:
         try:
@@ -309,6 +320,10 @@ class UnitreeSkillContainer(Module):
                 command_name, _UNITREE_COMMANDS.keys(), n=3, cutoff=0.6
             )
             return f"There's no '{command_name}' command. Did you mean: {suggestions}"
+
+        # Cancel navigation before posture commands to prevent cmd_vel conflicts
+        if command_name in self._POSTURE_COMMANDS:
+            self._cancel_navigation()
 
         id_, _ = _UNITREE_COMMANDS[command_name]
 
